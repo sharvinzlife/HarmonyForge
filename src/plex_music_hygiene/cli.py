@@ -281,6 +281,9 @@ def cmd_cleanup_artists(args):
     scans_err = 0
     if args.scan_csv:
         maps = parse_map(args.path_map)
+        scan_root = args.scan_root_prefix.rstrip("/")
+        if not scan_root:
+            scan_root = "/"
         folders = []
         seen = set()
         with open(args.scan_csv, newline="", encoding="utf-8") as f:
@@ -291,7 +294,10 @@ def cmd_cleanup_artists(args):
                     folders.append(fd)
 
         for fd in folders:
-            p = f"/LHarmony-Music/{fd}"
+            if scan_root == "/":
+                p = f"/{fd}"
+            else:
+                p = f"{scan_root}/{fd}"
             p = apply_maps(p, maps)
             try:
                 client.get(f"/library/sections/{args.section}/refresh", {"path": p})
@@ -498,6 +504,11 @@ def build_parser():
     s3.add_argument("--artist-ids", default="")
     s3.add_argument("--artist-names", default="")
     s3.add_argument("--scan-csv", default="")
+    s3.add_argument(
+        "--scan-root-prefix",
+        default="/Music",
+        help="Plex library root prefix for targeted refresh paths, e.g. /Music",
+    )
     s3.add_argument("--path-map", action="append", default=[])
     s3.add_argument("--section-refresh", action="store_true")
     s3.add_argument("--empty-trash", action="store_true")
