@@ -128,28 +128,52 @@ Without install:
 - Windows PowerShell: `.\bin\plexh.ps1 verify-artists --show 10`
 - Windows CMD: `bin\plexh.cmd verify-artists --show 10`
 
-## 📚 Typical Workflow
+## 📚 Simple Workflow (Easy Version)
+Think of this flow as: **find bad items -> fix tags -> clean old artist buckets -> fix covers -> verify**.
+
+### Before you run it
+1. `/Music` = the path Plex sees inside the library.
+2. `/mnt/nas/music` = the path your terminal sees on disk.
+3. If your paths differ, change both `--path-map` values.
+
+### Step 0: Create a report folder
 ```bash
 mkdir -p reports
+```
 
+### Step 1: Export problem tracks to CSV
+What it does: finds tracks currently grouped under bad artist names and writes `reports/targets.csv`.
+```bash
 plexh export-artist-tracks \
   --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
   --out-csv reports/targets.csv
+```
 
+### Step 2: Fix album + albumartist tags
+What it does: updates metadata so tracks regroup under clean album names.
+```bash
 plexh retag-from-csv \
   --server plex \
   --in-csv reports/targets.csv \
   --out-csv reports/retag_report.csv \
   --path-map "/Music=/mnt/nas/music"
+```
 
+### Step 3: Fix track numbering tags
+What it does: reads track numbers from filenames like `01 - Song.flac` and writes `tracknumber`.
+```bash
 plexh fix-track-numbers \
   --server plex \
   --in-csv reports/targets.csv \
   --out-csv reports/tracknumber_report.csv \
   --path-map "/Music=/mnt/nas/music" \
   --preserve-total
+```
 
+### Step 4: Remove stale artist buckets and rescan
+What it does: removes old bad artist shells and refreshes affected folders in Plex.
+```bash
 plexh cleanup-artists \
   --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
@@ -157,13 +181,32 @@ plexh cleanup-artists \
   --scan-root-prefix "/Music" \
   --path-map "/Music=/Music" \
   --section-refresh
+```
 
+### Step 5: Repair missing/corrupt artist posters
+What it does: fills broken or missing artist images from album art/local images.
+```bash
 plexh repair-artist-posters \
   --server plex \
   --fix-missing --fix-corrupt --generate-missing \
   --path-map "/Music=/mnt/nas/music" \
   --out-csv reports/poster_report.csv
+```
 
+### Step 6: Verify final state
+What it does: shows remaining missing/corrupt artist posters.
+```bash
+plexh verify-artists --server plex --show 20
+```
+
+### One-line full run
+```bash
+mkdir -p reports && \
+plexh export-artist-tracks --server plex --artist-names "Various Artists,V.A.,Verschillende artiesten" --out-csv reports/targets.csv && \
+plexh retag-from-csv --server plex --in-csv reports/targets.csv --out-csv reports/retag_report.csv --path-map "/Music=/mnt/nas/music" && \
+plexh fix-track-numbers --server plex --in-csv reports/targets.csv --out-csv reports/tracknumber_report.csv --path-map "/Music=/mnt/nas/music" --preserve-total && \
+plexh cleanup-artists --server plex --artist-names "Various Artists,V.A.,Verschillende artiesten" --scan-csv reports/targets.csv --scan-root-prefix "/Music" --path-map "/Music=/Music" --section-refresh && \
+plexh repair-artist-posters --server plex --fix-missing --fix-corrupt --generate-missing --path-map "/Music=/mnt/nas/music" --out-csv reports/poster_report.csv && \
 plexh verify-artists --server plex --show 20
 ```
 

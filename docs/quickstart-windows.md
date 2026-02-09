@@ -45,6 +45,13 @@ bin\plexh.cmd verify-artists --server plex --show 10
 
 ## Path mapping example
 ```powershell
+# 1) Export problematic tracks
+plexh export-artist-tracks `
+  --server plex `
+  --artist-names "Various Artists,V.A.,Verschillende artiesten" `
+  --out-csv reports\targets.csv
+
+# 2) Fix album + albumartist tags
 plexh retag-from-csv `
   --server plex `
   --in-csv reports\targets.csv `
@@ -54,10 +61,27 @@ plexh retag-from-csv `
 
 ## Track numbering fix example
 ```powershell
+# 3) Fix tracknumber tags from filenames
 plexh fix-track-numbers `
   --server plex `
   --in-csv reports\targets.csv `
   --out-csv reports\tracknumber_report.csv `
   --path-map "/Music=Z:\\Music" `
   --preserve-total
+
+# 4) Remove stale artist buckets and rescan
+plexh cleanup-artists `
+  --server plex `
+  --artist-names "Various Artists,V.A.,Verschillende artiesten" `
+  --scan-csv reports\targets.csv `
+  --scan-root-prefix "/Music" `
+  --path-map "/Music=/Music" `
+  --section-refresh
+
+# 5) Repair missing/corrupt artist posters
+plexh repair-artist-posters `
+  --server plex `
+  --fix-missing --fix-corrupt --generate-missing `
+  --path-map "/Music=Z:\\Music" `
+  --out-csv reports\poster_report.csv
 ```

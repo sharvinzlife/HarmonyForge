@@ -36,28 +36,40 @@ export PLEX_MUSIC_SECTION="6"
 plexh verify-artists --server plex --show 10
 ```
 
-## Full cycle example
+## Full cycle example (simple)
 ```bash
 mkdir -p reports
+```
 
+### 1) Export problematic tracks
+```bash
 plexh export-artist-tracks \
   --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
   --out-csv reports/various_targets.csv
+```
 
+### 2) Fix album and albumartist tags
+```bash
 plexh retag-from-csv \
   --server plex \
   --in-csv reports/various_targets.csv \
   --out-csv reports/retag_report.csv \
   --path-map "/Music=/mnt/nas/music"
+```
 
+### 3) Fix tracknumber tags from filenames
+```bash
 plexh fix-track-numbers \
   --server plex \
   --in-csv reports/various_targets.csv \
   --out-csv reports/tracknumber_report.csv \
   --path-map "/Music=/mnt/nas/music" \
   --preserve-total
+```
 
+### 4) Remove stale artist buckets and rescan
+```bash
 plexh cleanup-artists \
   --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
@@ -65,7 +77,10 @@ plexh cleanup-artists \
   --scan-root-prefix "/Music" \
   --path-map "/Music=/Music" \
   --section-refresh
+```
 
+### 5) Repair missing/corrupt posters
+```bash
 plexh repair-artist-posters \
   --server plex \
   --fix-missing --fix-corrupt --generate-missing \
