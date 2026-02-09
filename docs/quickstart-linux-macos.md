@@ -40,6 +40,13 @@ export PLEX_MUSIC_SECTION="6"
 plexh verify-artists --server plex --show 10
 ```
 
+## Run doctor first
+```bash
+plexh doctor --server plex \
+  --path-map "/Music=/mnt/nas/music" \
+  --scan-root-prefix "/Music"
+```
+
 ## Full cycle example (simple)
 ```bash
 mkdir -p reports

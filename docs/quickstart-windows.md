@@ -38,6 +38,13 @@ $env:PLEX_MUSIC_SECTION = "6"
 plexh verify-artists --server plex --show 10
 ```
 
+## Run doctor first
+```powershell
+plexh doctor --server plex `
+  --path-map "/Music=Z:\\Music" `
+  --scan-root-prefix "/Music"
+```
+
 ## Optional wrappers without install
 ```powershell
 .\bin\plexh.ps1 verify-artists --server plex --show 10

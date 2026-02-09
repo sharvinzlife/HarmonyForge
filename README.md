@@ -184,6 +184,28 @@ Without install:
 - Windows PowerShell: `.\bin\plexh.ps1 verify-artists --show 10`
 - Windows CMD: `bin\plexh.cmd verify-artists --show 10`
 
+## 🩺 Doctor Check (Run First)
+Use this before workflow commands to validate token, section, and path mapping.
+
+Linux/macOS:
+```bash
+plexh doctor --server plex \
+  --path-map "/Music=/mnt/nas/music" \
+  --scan-root-prefix "/Music"
+```
+
+Windows PowerShell:
+```powershell
+plexh doctor --server plex `
+  --path-map "/Music=Z:\\Music" `
+  --scan-root-prefix "/Music"
+```
+
+Output meaning:
+1. `OK` = good
+2. `WARN` = can continue, but review settings
+3. `FAIL` = fix this before running cleanup
+
 ## 📚 Simple Workflow (Easy Version)
 Think of this flow as: **find bad items -> fix tags -> clean old artist buckets -> fix covers -> verify**.
 
@@ -191,6 +213,7 @@ Think of this flow as: **find bad items -> fix tags -> clean old artist buckets 
 1. `/Music` = the path Plex sees inside the library.
 2. `/mnt/nas/music` = the path your terminal sees on disk.
 3. If your paths differ, change both `--path-map` values.
+4. Run `plexh doctor` first to catch token/path mistakes early.
 
 ### Step 0: Create a report folder
 ```bash

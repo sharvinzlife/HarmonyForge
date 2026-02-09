@@ -569,6 +569,116 @@ def cmd_verify_artists(args):
             print(f"  {rid} | {title}")
 
 
+def cmd_doctor(args):
+    failures = 0
+    warnings = 0
+
+    def ok(msg):
+        print(f"OK    {msg}")
+
+    def warn(msg):
+        nonlocal warnings
+        warnings += 1
+        print(f"WARN  {msg}")
+
+    def fail(msg):
+        nonlocal failures
+        failures += 1
+        print(f"FAIL  {msg}")
+
+    try:
+        maps = parse_map(args.path_map)
+        ok(f"path-map syntax valid ({len(maps)} entries)")
+    except Exception as e:
+        fail(f"path-map parse failed: {e}")
+        maps = []
+
+    if args.server != "plex":
+        warn(
+            f"--server {args.server}: API doctor checks are not implemented yet; "
+            "run file workflow checks only (retag/track-number commands)"
+        )
+        print(f"summary failures={failures} warnings={warnings}")
+        if failures:
+            raise SystemExit(2)
+        return
+
+    client = PlexClient(args.base_url, args.token, args.timeout)
+
+    # 1) Connectivity + token
+    try:
+        sections = client.get_xml("/library/sections")
+        dirs = sections.findall("Directory")
+        ok(f"connected to Plex at {args.base_url} (sections={len(dirs)})")
+    except Exception as e:
+        fail(f"cannot connect/auth to Plex API: {e}")
+        print(f"summary failures={failures} warnings={warnings}")
+        raise SystemExit(2)
+
+    # 2) Music section check
+    section_dir = None
+    for d in dirs:
+        if d.attrib.get("key") == str(args.section):
+            section_dir = d
+            break
+    if section_dir is None:
+        fail(f"section {args.section} not found")
+        print(f"summary failures={failures} warnings={warnings}")
+        raise SystemExit(2)
+
+    sec_type = section_dir.attrib.get("type", "")
+    sec_title = section_dir.attrib.get("title", "")
+    if sec_type != "artist":
+        warn(f"section {args.section} ({sec_title}) is type '{sec_type}', expected 'artist'")
+    else:
+        ok(f"section {args.section} ({sec_title}) is a music/artist section")
+
+    # 3) Library root path + path-map coverage
+    locations = section_dir.findall("Location")
+    if not locations:
+        warn(f"section {args.section} has no Location paths")
+    for loc in locations:
+        plex_root = loc.attrib.get("path", "")
+        if not plex_root:
+            continue
+        ok(f"plex library root: {plex_root}")
+
+        if maps:
+            host_root = apply_maps(plex_root, maps)
+            if host_root == plex_root:
+                warn(f"no path-map matched plex root {plex_root}")
+            elif os.path.isdir(host_root):
+                ok(f"mapped host root exists: {host_root}")
+            else:
+                fail(f"mapped host root does not exist: {host_root}")
+        else:
+            if os.path.isdir(plex_root):
+                ok(f"plex root exists on this host: {plex_root}")
+            else:
+                warn("no --path-map provided and plex root is not local on this host")
+
+    # 4) Scan-root sanity check
+    scan_root = args.scan_root_prefix.rstrip("/") or "/"
+    ok(f"scan root prefix set: {scan_root}")
+    if locations:
+        for loc in locations:
+            plex_root = loc.attrib.get("path", "")
+            if plex_root and not plex_root.startswith(scan_root):
+                warn(f"scan-root-prefix {scan_root} does not prefix section root {plex_root}")
+
+    # 5) Lightweight API permission check
+    try:
+        root = client.get_xml(f"/library/sections/{args.section}/all", {"type": "8"})
+        size = root.attrib.get("size", "0")
+        ok(f"can query artists in section {args.section} (size={size})")
+    except Exception as e:
+        fail(f"cannot query artists for section {args.section}: {e}")
+
+    print(f"summary failures={failures} warnings={warnings}")
+    if failures:
+        raise SystemExit(2)
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Plex Music Toolkit")
     p.add_argument(
@@ -633,6 +743,15 @@ def build_parser():
     s6.add_argument("--show", type=int, default=20)
     s6.set_defaults(func=cmd_verify_artists)
 
+    s7 = sub.add_parser("doctor")
+    s7.add_argument("--path-map", action="append", default=[], help="prefix map SRC=DST (repeatable)")
+    s7.add_argument(
+        "--scan-root-prefix",
+        default="/Music",
+        help="Plex library root prefix for targeted refresh paths, e.g. /Music",
+    )
+    s7.set_defaults(func=cmd_doctor)
+
     return p
 
 
@@ -644,6 +763,7 @@ def main():
         "cleanup-artists",
         "repair-artist-posters",
         "verify-artists",
+        "doctor",
     }
     if args.cmd in api_cmds and args.server != "plex":
         raise SystemExit(
