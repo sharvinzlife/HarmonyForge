@@ -77,6 +77,62 @@ $env:PLEX_TOKEN = "replace-with-your-token"
 $env:PLEX_MUSIC_SECTION = "6"
 ```
 
+## 🔐 Token + Path Setup (Important)
+### Is token built into the script?
+No. The script does **not** hardcode your token. You pass it at runtime using:
+1. environment variable `PLEX_TOKEN`, or
+2. CLI flag `--token`.
+
+### How to get your Plex token
+1. Open Plex Web in your browser and sign in.
+2. Open any library item, click the `...` menu, then `Get Info`.
+3. Open `View XML` for that item.
+4. In the opened URL, copy the value after `X-Plex-Token=`.
+
+### How to set token
+Linux/macOS:
+```bash
+export PLEX_TOKEN="paste-token-here"
+```
+
+Windows PowerShell:
+```powershell
+$env:PLEX_TOKEN = "paste-token-here"
+```
+
+Or pass directly:
+```bash
+plexh verify-artists --server plex --token "paste-token-here" --show 20
+```
+
+### How to set music paths correctly
+HarmonyForge uses two path types:
+1. **Server path** (what Plex sees): for example `/Music/Artist/Album/01 - Song.flac`
+2. **Host/NAS path** (what your shell sees): for example `/mnt/nas/music/Artist/Album/01 - Song.flac`
+
+Use `--path-map` to connect them:
+```bash
+--path-map "/Music=/mnt/nas/music"
+```
+
+For Windows mapped drives:
+```powershell
+--path-map "/Music=Z:\\Music"
+```
+
+### What is `--scan-root-prefix`?
+It tells cleanup commands what top-level path Plex scans.
+If your Plex library root is `/Music`, use:
+```bash
+--scan-root-prefix "/Music"
+```
+
+### Section ID (`PLEX_MUSIC_SECTION`)
+Default is often `6`, but yours may differ. You can pass another value:
+```bash
+plexh verify-artists --server plex --section 6 --show 20
+```
+
 ## ⚡ Super Quick Start
 ```bash
 git clone https://github.com/sharvinzlife/HarmonyForge.git

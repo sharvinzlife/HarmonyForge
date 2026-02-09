@@ -31,6 +31,10 @@ export PLEX_TOKEN="replace-with-your-token"
 export PLEX_MUSIC_SECTION="6"
 ```
 
+### Token note
+- Token is not hardcoded in HarmonyForge.
+- Get it from Plex Web -> item `...` -> `Get Info` -> `View XML` -> copy `X-Plex-Token`.
+
 ## Run
 ```bash
 plexh verify-artists --server plex --show 10
@@ -40,6 +44,11 @@ plexh verify-artists --server plex --show 10
 ```bash
 mkdir -p reports
 ```
+
+### Path note
+- `/Music` in commands = Plex library root path.
+- `/mnt/nas/music` = your shell-visible NAS mount path.
+- Change both values if your environment is different.
 
 ### 1) Export problematic tracks
 ```bash

@@ -29,6 +29,10 @@ $env:PLEX_TOKEN = "replace-with-your-token"
 $env:PLEX_MUSIC_SECTION = "6"
 ```
 
+### Token note
+- Token is not hardcoded in HarmonyForge.
+- Get it from Plex Web -> item `...` -> `Get Info` -> `View XML` -> copy `X-Plex-Token`.
+
 ## Run
 ```powershell
 plexh verify-artists --server plex --show 10
@@ -45,6 +49,8 @@ bin\plexh.cmd verify-artists --server plex --show 10
 
 ## Path mapping example
 ```powershell
+# `/Music` = Plex library root path
+# `Z:\Music` = your mapped NAS path in Windows
 # 1) Export problematic tracks
 plexh export-artist-tracks `
   --server plex `
