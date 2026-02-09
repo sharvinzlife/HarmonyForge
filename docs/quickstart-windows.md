@@ -38,6 +38,11 @@ $env:PLEX_MUSIC_SECTION = "6"
 plexh verify-artists --server plex --show 10
 ```
 
+## Interactive setup wizard
+```powershell
+plexh
+```
+
 ## Run doctor first
 ```powershell
 plexh doctor --server plex `

@@ -2,6 +2,7 @@
 import argparse
 import csv
 import io
+import getpass
 import mimetypes
 import os
 import re
@@ -21,6 +22,70 @@ except Exception:
 
 def eprint(*args):
     print(*args, file=sys.stderr)
+
+
+def supports_color():
+    if os.getenv("NO_COLOR"):
+        return False
+    return sys.stdout.isatty()
+
+
+def colorize(text: str, code: str, enabled: bool):
+    if not enabled:
+        return text
+    return f"\033[{code}m{text}\033[0m"
+
+
+def intro_banner(animated=True):
+    enabled = supports_color()
+    lines = [
+        r" _   _                                      _____                       ",
+        r"| | | | __ _ _ __ _ __ ___   ___  _ __  _   _|  ___|__  _ __ __ _  ___ ",
+        r"| |_| |/ _` | '__| '_ ` _ \ / _ \| '_ \| | | | |_ / _ \| '__/ _` |/ _ \ ",
+        r"|  _  | (_| | |  | | | | | | (_) | | | | |_| |  _| (_) | | | (_| |  __/ ",
+        r"|_| |_|\__,_|_|  |_| |_| |_|\___/|_| |_|\__, |_|  \___/|_|  \__, |\___| ",
+        r"                                         |___/               |___/       ",
+    ]
+    tagline = "HarmonyForge by sharvinzlife - your music metadata fix companion"
+    palette = ["96", "95", "94", "93", "92"]
+
+    if animated and sys.stdout.isatty():
+        for step in range(3):
+            print("\033[2J\033[H", end="")
+            for idx, line in enumerate(lines):
+                code = palette[(idx + step) % len(palette)]
+                print(colorize(line, code, enabled))
+            print(colorize(tagline, "1;33", enabled))
+            print()
+            time.sleep(0.12)
+    else:
+        for idx, line in enumerate(lines):
+            print(colorize(line, palette[idx % len(palette)], enabled))
+        print(colorize(tagline, "1;33", enabled))
+        print()
+
+
+def prompt_input(label, default="", secret=False):
+    prompt = f"{label}"
+    if default:
+        prompt += f" [{default}]"
+    prompt += ": "
+    if secret:
+        v = getpass.getpass(prompt)
+    else:
+        v = input(prompt)
+    v = v.strip()
+    if not v:
+        return default
+    return v
+
+
+def prompt_yes_no(label, default_yes=True):
+    suffix = "[Y/n]" if default_yes else "[y/N]"
+    v = input(f"{label} {suffix}: ").strip().lower()
+    if not v:
+        return default_yes
+    return v in ("y", "yes")
 
 
 class PlexClient:
@@ -593,6 +658,11 @@ def cmd_doctor(args):
         fail(f"path-map parse failed: {e}")
         maps = []
 
+    if not args.token:
+        fail("missing token: set PLEX_TOKEN or pass --token")
+        print(f"summary failures={failures} warnings={warnings}")
+        raise SystemExit(2)
+
     if args.server != "plex":
         warn(
             f"--server {args.server}: API doctor checks are not implemented yet; "
@@ -679,6 +749,94 @@ def cmd_doctor(args):
         raise SystemExit(2)
 
 
+def cmd_wizard(args):
+    intro_banner(animated=not args.no_animate)
+    print("Welcome to HarmonyForge setup wizard.")
+    print("This will collect settings and run a doctor check.\n")
+
+    defaults = {
+        "server": args.server or "plex",
+        "base_url": args.base_url or "http://127.0.0.1:32400",
+        "token": args.token or "",
+        "section": str(args.section or "6"),
+        "plex_root": "/Music",
+        "host_root": "/mnt/nas/music",
+        "scan_root": "/Music",
+    }
+
+    while True:
+        server = prompt_input("Server backend (plex/jellyfin/emby)", defaults["server"])
+        base_url = prompt_input("Plex base URL", defaults["base_url"])
+        token = prompt_input("Plex token", defaults["token"], secret=True)
+        section = prompt_input("Music section id", defaults["section"])
+        plex_root = prompt_input("Plex library root path (server path)", defaults["plex_root"])
+        host_root = prompt_input("Host/NAS music root path (local shell path)", defaults["host_root"])
+        scan_root = prompt_input("Scan root prefix for cleanup", defaults["scan_root"])
+
+        defaults.update(
+            {
+                "server": server,
+                "base_url": base_url,
+                "token": token,
+                "section": section,
+                "plex_root": plex_root,
+                "host_root": host_root,
+                "scan_root": scan_root,
+            }
+        )
+
+        token_preview = "<empty>" if not token else ("*" * max(0, len(token) - 4) + token[-4:])
+        print("\nConfiguration:")
+        print(f"  server        : {server}")
+        print(f"  base_url      : {base_url}")
+        print(f"  token         : {token_preview}")
+        print(f"  section       : {section}")
+        print(f"  path_map      : {plex_root}={host_root}")
+        print(f"  scan_root     : {scan_root}")
+        print()
+
+        doctor_args = argparse.Namespace(
+            server=server,
+            base_url=base_url,
+            token=token,
+            section=section,
+            timeout=args.timeout,
+            path_map=[f"{plex_root}={host_root}"],
+            scan_root_prefix=scan_root,
+        )
+        print("Running doctor...\n")
+        success = True
+        try:
+            cmd_doctor(doctor_args)
+        except SystemExit:
+            success = False
+
+        print()
+        if success:
+            print(colorize("Setup looks good. You are ready to run workflows.", "1;92", supports_color()))
+            if prompt_yes_no("Save these values to .env.local for this repo?", default_yes=True):
+                env_path = args.env_file
+                with open(env_path, "w", encoding="utf-8") as f:
+                    f.write(f"MEDIA_SERVER={server}\n")
+                    f.write(f"PLEX_BASE_URL={base_url}\n")
+                    f.write(f"PLEX_TOKEN={token}\n")
+                    f.write(f"PLEX_MUSIC_SECTION={section}\n")
+                    f.write(f"HF_PATH_MAP={plex_root}={host_root}\n")
+                    f.write(f"HF_SCAN_ROOT={scan_root}\n")
+                print(f"Saved {env_path}")
+
+            print("\nSuggested next command:")
+            print(
+                "plexh export-artist-tracks --server plex "
+                '--artist-names "Various Artists,V.A.,Verschillende artiesten" '
+                "--out-csv reports/targets.csv"
+            )
+            return
+
+        if not prompt_yes_no("Doctor reported failures. Edit values and retry?", default_yes=True):
+            raise SystemExit(2)
+
+
 def build_parser():
     p = argparse.ArgumentParser(description="Plex Music Toolkit")
     p.add_argument(
@@ -692,7 +850,12 @@ def build_parser():
     p.add_argument("--section", default=os.getenv("PLEX_MUSIC_SECTION", "6"))
     p.add_argument("--timeout", type=int, default=60)
 
-    sub = p.add_subparsers(dest="cmd", required=True)
+    sub = p.add_subparsers(dest="cmd", required=False)
+
+    s0 = sub.add_parser("wizard")
+    s0.add_argument("--no-animate", action="store_true")
+    s0.add_argument("--env-file", default=".env.local")
+    s0.set_defaults(func=cmd_wizard)
 
     s1 = sub.add_parser("export-artist-tracks")
     s1.add_argument("--artist-names", required=True, help="Comma-separated names")
@@ -758,6 +921,15 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
+    if not args.cmd:
+        if not sys.stdin.isatty():
+            parser.print_help()
+            return
+        args.cmd = "wizard"
+        args.no_animate = False
+        args.env_file = ".env.local"
+        cmd_wizard(args)
+        return
     api_cmds = {
         "export-artist-tracks",
         "cleanup-artists",

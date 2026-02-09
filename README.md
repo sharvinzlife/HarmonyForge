@@ -174,6 +174,16 @@ pip install -e .
 ```
 
 ## 🛠️ One Command Interface
+Interactive startup:
+```bash
+plexh
+```
+Running `plexh` with no subcommand opens an interactive wizard with:
+1. animated HarmonyForge banner
+2. prompts for server URL, token, section, and paths
+3. automatic `doctor` validation
+4. optional save to `.env.local`
+
 After install:
 ```bash
 plexh --help
@@ -308,3 +318,12 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 ## ⚠️ Safety
 - Start with `retag-from-csv --dry-run` for new libraries.
 - Avoid `--empty-trash` unless media deletion is disabled.
+
+---
+
+## 💙 Credits
+Made with love by **sharvinzlife**.
+
+[![Facebook](https://img.shields.io/badge/Facebook-sharvinzlife-1877F2?logo=facebook&logoColor=white)](https://fb.com/sharvinzlife)
+[![X](https://img.shields.io/badge/X-@sharvinzlife-000000?logo=x&logoColor=white)](https://x.com/sharvinzlife)
+[![Instagram](https://img.shields.io/badge/Instagram-@sharvinzlife-E4405F?logo=instagram&logoColor=white)](https://instagram.com/sharvinzlife)

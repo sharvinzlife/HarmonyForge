@@ -40,6 +40,11 @@ export PLEX_MUSIC_SECTION="6"
 plexh verify-artists --server plex --show 10
 ```
 
+## Interactive setup wizard
+```bash
+plexh
+```
+
 ## Run doctor first
 ```bash
 plexh doctor --server plex \

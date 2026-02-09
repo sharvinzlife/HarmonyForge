@@ -22,6 +22,7 @@ class TestCliParser(unittest.TestCase):
                 "repair-artist-posters",
                 "verify-artists",
                 "doctor",
+                "wizard",
             }.issubset(commands)
         )
 
