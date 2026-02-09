@@ -5,8 +5,10 @@
 flowchart LR
   U[Operator] --> C[plexh CLI]
   C --> T[Tag Engine (mutagen)]
+  C --> N[Track Number Normalizer]
   C --> A[Server Adapter]
   T --> F[Music Files]
+  N --> F
   A --> P[Plex API (Implemented)]
   A --> J[Jellyfin API (Planned)]
   A --> E[Emby API (Planned)]
@@ -17,11 +19,12 @@ flowchart LR
 ```mermaid
 flowchart TD
   A[Export bad artist tracks] --> B[Retag album and albumartist]
-  B --> C[Refresh targeted server paths]
-  C --> D[Delete stale artist shells]
-  D --> E[Verify artist search hits]
-  E --> F[Repair missing and corrupt artist posters]
-  F --> G[Final verification and reports]
+  B --> C[Fix track numbering from filenames]
+  C --> D[Refresh targeted server paths]
+  D --> E[Delete stale artist shells]
+  E --> F[Verify artist search hits]
+  F --> G[Repair missing and corrupt artist posters]
+  G --> H[Final verification and reports]
 ```
 
 ## Script Layout

@@ -93,6 +93,24 @@ def apply_maps(path: str, maps):
     return path
 
 
+def extract_track_number_from_filename(path: str):
+    base = os.path.basename(path)
+    stem, _ext = os.path.splitext(base)
+    patterns = [
+        r"^\s*0*(\d{1,3})\s*[-._)]",
+        r"^\s*track\s*0*(\d{1,3})\b",
+        r"^\s*0*(\d{1,3})\s+",
+        r"^\s*0*(\d{1,3})$",
+    ]
+    for pat in patterns:
+        m = re.match(pat, stem, flags=re.IGNORECASE)
+        if m:
+            n = int(m.group(1))
+            if 0 < n <= 999:
+                return n
+    return None
+
+
 def load_all_artists(client: PlexClient, section_id: str):
     root = client.get_xml(f"/library/sections/{section_id}/all", {"type": "8"})
     return root
@@ -248,6 +266,78 @@ def cmd_retag_from_csv(args):
     with open(args.out_csv, "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["path", "status", "expected_folder", "before_album", "before_albumartist_or_error"])
+        w.writerows(rows)
+
+    counts = Counter(r[1] for r in rows)
+    print(f"processed={len(rows)}")
+    print(f"updated={updated}")
+    for k in sorted(counts):
+        print(f"{k}={counts[k]}")
+    print(f"csv={args.out_csv}")
+
+
+def cmd_fix_track_numbers(args):
+    if MutagenFile is None:
+        raise SystemExit("mutagen is required for fix-track-numbers")
+
+    maps = parse_map(args.path_map)
+    seen = set()
+    rows = []
+    updated = 0
+
+    with open(args.in_csv, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            p = row["plex_file"]
+            host = apply_maps(p, maps)
+            if host in seen:
+                continue
+            seen.add(host)
+
+            desired = extract_track_number_from_filename(host)
+            if desired is None:
+                rows.append([host, "no_track_number_in_filename", "", ""])
+                continue
+
+            if not os.path.exists(host):
+                rows.append([host, "missing", desired, ""])
+                continue
+            if not os.access(host, os.W_OK):
+                rows.append([host, "permission_denied", desired, ""])
+                continue
+
+            try:
+                audio = MutagenFile(host, easy=True)
+                if audio is None:
+                    rows.append([host, "unreadable", desired, ""])
+                    continue
+
+                before = (audio.get("tracknumber") or [""])[0]
+                before_main = before.split("/", 1)[0].strip()
+                desired_str = str(desired)
+
+                if before_main == desired_str:
+                    rows.append([host, "ok_already", desired, before])
+                    continue
+
+                new_value = desired_str
+                if args.preserve_total and "/" in before:
+                    total_part = before.split("/", 1)[1].strip()
+                    if total_part:
+                        new_value = f"{desired_str}/{total_part}"
+
+                if args.dry_run:
+                    rows.append([host, "would_update", desired, before])
+                else:
+                    audio["tracknumber"] = [new_value]
+                    audio.save()
+                    updated += 1
+                    rows.append([host, "updated", desired, before])
+            except Exception as e:
+                rows.append([host, "error", desired, str(e)])
+
+    with open(args.out_csv, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["path", "status", "desired_tracknumber", "before_tracknumber_or_error"])
         w.writerows(rows)
 
     counts = Counter(r[1] for r in rows)
@@ -506,34 +596,42 @@ def build_parser():
     s2.add_argument("--dry-run", action="store_true")
     s2.set_defaults(func=cmd_retag_from_csv)
 
-    s3 = sub.add_parser("cleanup-artists")
-    s3.add_argument("--artist-ids", default="")
-    s3.add_argument("--artist-names", default="")
-    s3.add_argument("--scan-csv", default="")
-    s3.add_argument(
+    s3 = sub.add_parser("fix-track-numbers")
+    s3.add_argument("--in-csv", required=True)
+    s3.add_argument("--out-csv", required=True)
+    s3.add_argument("--path-map", action="append", default=[], help="prefix map SRC=DST (repeatable)")
+    s3.add_argument("--preserve-total", action="store_true", help="Preserve total when existing value is N/TOTAL")
+    s3.add_argument("--dry-run", action="store_true")
+    s3.set_defaults(func=cmd_fix_track_numbers)
+
+    s4 = sub.add_parser("cleanup-artists")
+    s4.add_argument("--artist-ids", default="")
+    s4.add_argument("--artist-names", default="")
+    s4.add_argument("--scan-csv", default="")
+    s4.add_argument(
         "--scan-root-prefix",
         default="/Music",
         help="Plex library root prefix for targeted refresh paths, e.g. /Music",
     )
-    s3.add_argument("--path-map", action="append", default=[])
-    s3.add_argument("--section-refresh", action="store_true")
-    s3.add_argument("--empty-trash", action="store_true")
-    s3.add_argument("--wait-seconds", type=int, default=20)
-    s3.set_defaults(func=cmd_cleanup_artists)
-
-    s4 = sub.add_parser("repair-artist-posters")
-    s4.add_argument("--out-csv", required=True)
     s4.add_argument("--path-map", action="append", default=[])
-    s4.add_argument("--fix-missing", action="store_true")
-    s4.add_argument("--fix-corrupt", action="store_true")
-    s4.add_argument("--generate-missing", action="store_true")
-    s4.add_argument("--max-image-depth", type=int, default=4)
-    s4.add_argument("--tmp-dir", default="/tmp/plex_artist_generated")
-    s4.set_defaults(func=cmd_repair_artist_posters)
+    s4.add_argument("--section-refresh", action="store_true")
+    s4.add_argument("--empty-trash", action="store_true")
+    s4.add_argument("--wait-seconds", type=int, default=20)
+    s4.set_defaults(func=cmd_cleanup_artists)
 
-    s5 = sub.add_parser("verify-artists")
-    s5.add_argument("--show", type=int, default=20)
-    s5.set_defaults(func=cmd_verify_artists)
+    s5 = sub.add_parser("repair-artist-posters")
+    s5.add_argument("--out-csv", required=True)
+    s5.add_argument("--path-map", action="append", default=[])
+    s5.add_argument("--fix-missing", action="store_true")
+    s5.add_argument("--fix-corrupt", action="store_true")
+    s5.add_argument("--generate-missing", action="store_true")
+    s5.add_argument("--max-image-depth", type=int, default=4)
+    s5.add_argument("--tmp-dir", default="/tmp/plex_artist_generated")
+    s5.set_defaults(func=cmd_repair_artist_posters)
+
+    s6 = sub.add_parser("verify-artists")
+    s6.add_argument("--show", type=int, default=20)
+    s6.set_defaults(func=cmd_verify_artists)
 
     return p
 

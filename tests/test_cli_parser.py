@@ -17,6 +17,7 @@ class TestCliParser(unittest.TestCase):
             {
                 "export-artist-tracks",
                 "retag-from-csv",
+                "fix-track-numbers",
                 "cleanup-artists",
                 "repair-artist-posters",
                 "verify-artists",

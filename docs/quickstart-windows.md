@@ -51,3 +51,13 @@ plexh retag-from-csv `
   --out-csv reports\retag_report.csv `
   --path-map "/Music=Z:\\Music"
 ```
+
+## Track numbering fix example
+```powershell
+plexh fix-track-numbers `
+  --server plex `
+  --in-csv reports\targets.csv `
+  --out-csv reports\tracknumber_report.csv `
+  --path-map "/Music=Z:\\Music" `
+  --preserve-total
+```

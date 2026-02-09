@@ -18,11 +18,31 @@
 </p>
 
 ## 🚀 Multi-Purpose Scope
-HarmonyForge is built as a media-library hygiene toolkit for **Plex, Jellyfin, and Emby**.
+HarmonyForge is built as a media-library hygiene toolkit for **Plex, Jellyfin, and Emby**, with practical workflows for cleanup and long-term organization.
 
-- ✅ **Plex API workflows**: export, cleanup, poster repair, verify
-- ✅ **Server-agnostic file workflows**: retag from CSV with `mutagen`
-- 🛠️ **Planned adapters**: Jellyfin/Emby API workflows
+### ✨ Why It Is Useful
+1. It removes messy artist buckets like `Various Artists`, `V.A.`, and language variants.
+2. It standardizes tags so libraries regroup correctly after scans.
+3. It repairs missing/corrupt artist posters.
+4. It keeps CSV audit reports so changes are traceable and repeatable.
+5. It helps maintain clean albums with correct track numbering tags.
+
+### 🧰 Feature Map
+1. **API-driven cleanup (Plex today)**
+: `export-artist-tracks`, `cleanup-artists`, `repair-artist-posters`, `verify-artists`
+2. **Server-agnostic file-tag hygiene**
+: `retag-from-csv` updates `album` and `albumartist` based on target folders
+3. **Track numbering correction**
+: `fix-track-numbers` reads leading numbers from filenames (for example `01 - Song.flac`) and writes `tracknumber`
+4. **Cross-platform execution**
+: Linux/macOS/Windows wrappers and CI matrix
+5. **Portable project structure**
+: reusable scripts, docs, diagrams, and report outputs
+
+### 🔧 Backend Support Status
+1. ✅ **Plex API workflows**: implemented
+2. ✅ **Jellyfin/Emby file-tag workflows**: implemented (file operations are server-agnostic)
+3. 🛠️ **Jellyfin/Emby API adapters**: planned
 
 Use `--server plex|jellyfin|emby` to select backend behavior.
 
@@ -31,8 +51,10 @@ Use `--server plex|jellyfin|emby` to select backend behavior.
 flowchart LR
   U[User / Admin] --> C[plexh CLI]
   C --> M[Metadata Tag Engine]
+  C --> N[Track Number Normalizer]
   C --> A[Server Adapter]
   M --> F[Music Files on NAS]
+  N --> F
   A --> P[Plex API]
   A --> J[Jellyfin API Adapter Planned]
   A --> E[Emby API Adapter Planned]
@@ -120,6 +142,13 @@ plexh retag-from-csv \
   --in-csv reports/targets.csv \
   --out-csv reports/retag_report.csv \
   --path-map "/Music=/mnt/nas/music"
+
+plexh fix-track-numbers \
+  --server plex \
+  --in-csv reports/targets.csv \
+  --out-csv reports/tracknumber_report.csv \
+  --path-map "/Music=/mnt/nas/music" \
+  --preserve-total
 
 plexh cleanup-artists \
   --server plex \

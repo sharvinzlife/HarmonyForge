@@ -51,6 +51,13 @@ plexh retag-from-csv \
   --out-csv reports/retag_report.csv \
   --path-map "/Music=/mnt/nas/music"
 
+plexh fix-track-numbers \
+  --server plex \
+  --in-csv reports/various_targets.csv \
+  --out-csv reports/tracknumber_report.csv \
+  --path-map "/Music=/mnt/nas/music" \
+  --preserve-total
+
 plexh cleanup-artists \
   --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
