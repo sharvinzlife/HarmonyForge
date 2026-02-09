@@ -1,11 +1,23 @@
 # Windows Quickstart
 
-## Install (PowerShell)
+## Get the repo
+```powershell
+git clone https://github.com/sharvinzlife/HarmonyForge.git
+cd HarmonyForge
+```
+
+## 🪟 Install (PowerShell)
 ```powershell
 winget install -e --id Python.Python.3.11
-cd plex-music-hygiene
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+## 💻 Install (CMD)
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
 pip install -e .
 ```
 

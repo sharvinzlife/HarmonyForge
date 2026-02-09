@@ -1,19 +1,23 @@
 # Linux and macOS Quickstart
 
-## Linux Install (Ubuntu/Debian)
+## Get the repo
+```bash
+git clone https://github.com/sharvinzlife/HarmonyForge.git
+cd HarmonyForge
+```
+
+## 🐧 Linux Install (Ubuntu/Debian)
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip
-cd plex-music-hygiene
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-## macOS Install
+## 🍎 macOS Install
 ```bash
 brew install python
-cd plex-music-hygiene
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .

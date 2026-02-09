@@ -1,7 +1,7 @@
 # 🎵 HarmonyForge
 
 <p align="center">
-  <img src="assets/logo.png" alt="HarmonyForge logo" width="780" />
+  <img src="Harmony-Forge-Logo.png" alt="HarmonyForge logo" width="780" />
 </p>
 
 <p align="center">
@@ -55,9 +55,15 @@ $env:PLEX_TOKEN = "replace-with-your-token"
 $env:PLEX_MUSIC_SECTION = "6"
 ```
 
+## ⚡ Super Quick Start
+```bash
+git clone https://github.com/sharvinzlife/HarmonyForge.git
+cd HarmonyForge
+```
+
 ## ⚙️ Install By Platform
 
-### Linux (Ubuntu/Debian)
+### 🐧 Linux (Ubuntu/Debian)
 ```bash
 sudo apt update
 sudo apt install -y python3 python3-venv python3-pip
@@ -66,7 +72,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-### macOS
+### 🍎 macOS
 ```bash
 brew install python
 python3 -m venv .venv
@@ -74,11 +80,18 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-### Windows (PowerShell)
+### 🪟 Windows (PowerShell)
 ```powershell
 winget install -e --id Python.Python.3.11
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+### 💻 Windows (CMD)
+```cmd
+python -m venv .venv
+.venv\Scripts\activate.bat
 pip install -e .
 ```
 
