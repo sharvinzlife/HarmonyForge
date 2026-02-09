@@ -184,7 +184,30 @@ Running `plexh` with no subcommand opens an interactive wizard with:
 3. automatic `doctor` validation
 4. optional save to `.env.local`
 
+Startup preview:
+<p align="center">
+  <img src="docs/screenshots/wizard-startup.png" alt="HarmonyForge wizard startup preview" width="900" />
+</p>
+
 After install:
+```bash
+plexh --help
+```
+
+## 🧾 CLI Help
+Quick command map:
+```text
+wizard                 Interactive setup + doctor validation
+doctor                 Validate token, section, and path mapping
+export-artist-tracks   Export bad artist bucket tracks to CSV
+retag-from-csv         Fix album + albumartist tags
+fix-track-numbers      Fix tracknumber tags from filename prefixes
+cleanup-artists        Delete stale artist shells + trigger rescans
+repair-artist-posters  Repair missing/corrupt artist covers
+verify-artists         Verify artist poster health summary
+```
+
+Help command:
 ```bash
 plexh --help
 ```
