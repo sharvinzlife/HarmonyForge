@@ -1,39 +1,54 @@
 # Linux and macOS Quickstart
 
-## 1) Install
+## Linux Install (Ubuntu/Debian)
 ```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip
 cd plex-music-hygiene
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-## 2) Configure
+## macOS Install
 ```bash
+brew install python
+cd plex-music-hygiene
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## Configure
+```bash
+export MEDIA_SERVER="plex"
 export PLEX_BASE_URL="http://192.168.1.100:32400"
 export PLEX_TOKEN="replace-with-your-token"
 export PLEX_MUSIC_SECTION="6"
 ```
 
-## 3) Run
+## Run
 ```bash
-plexh verify-artists --show 10
+plexh verify-artists --server plex --show 10
 ```
 
-## 4) Full cycle example
+## Full cycle example
 ```bash
 mkdir -p reports
 
 plexh export-artist-tracks \
+  --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
   --out-csv reports/various_targets.csv
 
 plexh retag-from-csv \
+  --server plex \
   --in-csv reports/various_targets.csv \
   --out-csv reports/retag_report.csv \
   --path-map "/Music=/mnt/nas/music"
 
 plexh cleanup-artists \
+  --server plex \
   --artist-names "Various Artists,V.A.,Verschillende artiesten" \
   --scan-csv reports/various_targets.csv \
   --scan-root-prefix "/Music" \
@@ -41,12 +56,13 @@ plexh cleanup-artists \
   --section-refresh
 
 plexh repair-artist-posters \
+  --server plex \
   --fix-missing --fix-corrupt --generate-missing \
   --path-map "/Music=/mnt/nas/music" \
   --out-csv reports/poster_report.csv
 ```
 
-## 5) Optional SSH alias pattern
+## Optional SSH alias pattern
 ```bash
 ssh nas-music
 ```

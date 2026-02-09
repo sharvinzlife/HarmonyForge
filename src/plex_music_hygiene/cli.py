@@ -481,6 +481,12 @@ def cmd_verify_artists(args):
 
 def build_parser():
     p = argparse.ArgumentParser(description="Plex Music Toolkit")
+    p.add_argument(
+        "--server",
+        default=os.getenv("MEDIA_SERVER", "plex"),
+        choices=["plex", "jellyfin", "emby"],
+        help="Media server backend",
+    )
     p.add_argument("--base-url", default=os.getenv("PLEX_BASE_URL", "http://127.0.0.1:32400"))
     p.add_argument("--token", default=os.getenv("PLEX_TOKEN", ""))
     p.add_argument("--section", default=os.getenv("PLEX_MUSIC_SECTION", "6"))
@@ -535,7 +541,18 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
-    if not args.token:
+    api_cmds = {
+        "export-artist-tracks",
+        "cleanup-artists",
+        "repair-artist-posters",
+        "verify-artists",
+    }
+    if args.cmd in api_cmds and args.server != "plex":
+        raise SystemExit(
+            f"--server {args.server} adapter is not implemented yet for API workflows. "
+            "Use --server plex, or run retag-from-csv for server-agnostic file tag repair."
+        )
+    if args.cmd in api_cmds and not args.token:
         raise SystemExit("Missing --token or PLEX_TOKEN")
     args.func(args)
 

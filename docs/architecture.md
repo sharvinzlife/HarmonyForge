@@ -4,18 +4,20 @@
 ```mermaid
 flowchart LR
   U[Operator] --> C[plexh CLI]
-  C --> P[Plex API]
-  C --> F[Music Files]
-  C --> R[CSV Reports]
-  P --> DB[Plex Metadata DB]
-  F --> NAS[NAS or Mounted Share]
+  C --> T[Tag Engine (mutagen)]
+  C --> A[Server Adapter]
+  T --> F[Music Files]
+  A --> P[Plex API (Implemented)]
+  A --> J[Jellyfin API (Planned)]
+  A --> E[Emby API (Planned)]
+  C --> R[Reports CSV]
 ```
 
 ## Cleanup Pipeline
 ```mermaid
 flowchart TD
   A[Export bad artist tracks] --> B[Retag album and albumartist]
-  B --> C[Refresh targeted Plex paths]
+  B --> C[Refresh targeted server paths]
   C --> D[Delete stale artist shells]
   D --> E[Verify artist search hits]
   E --> F[Repair missing and corrupt artist posters]
