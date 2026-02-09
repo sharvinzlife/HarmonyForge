@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 220" role="img" aria-labelledby="title desc">
+  <title id="title">Plex Music Hygiene Logo</title>
+  <desc id="desc">A bold shield with a note and wrench plus project wordmark.</desc>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b3d5c"/>
+      <stop offset="100%" stop-color="#14967f"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="680" height="220" fill="#09131f"/>
+  <g transform="translate(28,24)">
+    <path d="M84 0l72 28v56c0 48-30 78-72 108C42 162 12 132 12 84V28L84 0z" fill="url(#g1)"/>
+    <circle cx="84" cy="106" r="14" fill="#f4c542"/>
+    <rect x="95" y="52" width="12" height="60" rx="6" fill="#f4c542"/>
+    <path d="M84 106l38-18" stroke="#f4c542" stroke-width="10" stroke-linecap="round"/>
+    <path d="M43 132l22-22m-7-7l14 14m-29 32l8-8m56-33l10 10" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g fill="#e6edf6" font-family="Segoe UI, Arial, sans-serif">
+    <text x="232" y="95" font-size="52" font-weight="700">Plex Music Hygiene</text>
+    <text x="232" y="136" font-size="24" fill="#94a8bf">Tag repair, artist cleanup, poster recovery</text>
+  </g>
+</svg>

@@ -1,71 +1,83 @@
-# plex-music-hygiene
-Reusable toolkit for Plex music cleanup and recovery:
-- export tracks under bad artist buckets (for example `Various Artists`)
-- retag files from Plex-exported CSV (`album` and `albumartist`)
-- repair missing/corrupt artist posters
-- delete stale artist metadata and trigger rescans
-- verify poster integrity across the full artist library
+# HarmonyForge (plex-music-hygiene)
 
-## Requirements
-- Python 3.8+
-- `mutagen` (`pip install mutagen`)
-- optional: `Pillow` for generated fallback covers (`pip install pillow`)
-- Plex token with access to the target server
+Portable Plex music repair toolkit for:
+- fixing bad artist buckets (`Various Artists`, `V.A.`, localized variants)
+- repairing `album` and `albumartist` tags in bulk
+- repairing missing/corrupt artist posters
+- exporting CSV audit trails for every operation
 
-## Quick Start
+![HarmonyForge logo](assets/logo.svg)
+
+## Why this persists
+Tag and folder fixes are written to media files and filesystem paths, so they survive Plex appdata loss and full rescans.
+
+## Install
 ```bash
-export PLEX_BASE_URL="http://127.0.0.1:32400"
-export PLEX_TOKEN="<your-token>"
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Windows PowerShell:
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .
+```
+
+## Configure
+```bash
+export PLEX_BASE_URL="http://10.1.0.105:32400"
+export PLEX_TOKEN="your-token"
 export PLEX_MUSIC_SECTION="6"
 ```
 
-Verify state:
+## One command interface
+After install:
 ```bash
-python3 scripts/plex_music_toolkit.py verify-artists
+plexh --help
 ```
 
-Export tracks currently grouped under bad artists:
-```bash
-python3 scripts/plex_music_toolkit.py export-artist-tracks \
-  --artist-names "Various Artists,Verschillende artiesten" \
-  --out-csv various_artist_tracks.csv
-```
+Without install:
+- Linux/macOS: `./bin/plexh verify-artists --show 10`
+- Windows: `.\bin\plexh.ps1 verify-artists --show 10`
 
-Retag files from CSV (map Plex mount path to host filesystem path):
+## Typical workflow
 ```bash
-python3 scripts/plex_music_toolkit.py retag-from-csv \
-  --in-csv various_artist_tracks.csv \
-  --out-csv retag_report.csv \
+mkdir -p reports
+
+plexh export-artist-tracks \
+  --artist-names "Various Artists,V.A.,Verschillende artiesten" \
+  --out-csv reports/targets.csv
+
+plexh retag-from-csv \
+  --in-csv reports/targets.csv \
+  --out-csv reports/retag_report.csv \
   --path-map "/LHarmony-Music=/mnt/remotes/LHARMONY-NAS_data/media/music"
-```
 
-Cleanup stale artist entries and trigger targeted rescans:
-```bash
-python3 scripts/plex_music_toolkit.py cleanup-artists \
-  --artist-names "Various Artists,Verschillende artiesten" \
-  --scan-csv various_artist_tracks.csv \
+plexh cleanup-artists \
+  --artist-names "Various Artists,V.A.,Verschillende artiesten" \
+  --scan-csv reports/targets.csv \
   --path-map "/LHarmony-Music=/LHarmony-Music" \
-  --section-refresh \
-  --empty-trash \
-  --wait-seconds 20
+  --section-refresh
+
+plexh repair-artist-posters \
+  --fix-missing --fix-corrupt --generate-missing \
+  --path-map "/LHarmony-Music=/mnt/remotes/LHARMONY-NAS_data/media/music" \
+  --out-csv reports/poster_report.csv
+
+plexh verify-artists --show 20
 ```
 
-Repair artist posters:
-```bash
-python3 scripts/plex_music_toolkit.py repair-artist-posters \
-  --out-csv poster_repair_report.csv \
-  --fix-missing \
-  --fix-corrupt \
-  --generate-missing \
-  --path-map "/LHarmony-Music=/mnt/remotes/LHARMONY-NAS_data/media/music"
-```
+## Architecture
+See `docs/architecture.md` (Mermaid diagrams included).
 
-## Persistence Notes
-- File tag edits (`album`, `albumartist`) are persistent in media files and survive Plex appdata loss.
-- Plex DB-only artwork assignments do not survive appdata loss unless equivalent local cover files exist.
-- Keep this toolkit and rerun when rebuilding Plex metadata.
+## Docs
+- Linux/macOS quickstart: `docs/quickstart-linux-macos.md`
+- Windows quickstart: `docs/quickstart-windows.md`
+- Publish to GitHub: `docs/github-publish.md`
+- Name ideas: `docs/name-ideas.md`
 
-## Safety
-- Start with `retag-from-csv --dry-run`.
-- Keep CSV reports for audit trails.
-- Use targeted scan CSV for controlled rescans.
+## Safety notes
+- Start with `retag-from-csv --dry-run` if needed.
+- Avoid `--empty-trash` unless you intentionally want Plex DB cleanup and know media delete is disabled in Plex settings.

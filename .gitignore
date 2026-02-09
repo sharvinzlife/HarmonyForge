@@ -6,3 +6,7 @@ __pycache__/
 .env
 *.csv
 reports/
+.venv/
+dist/
+build/
+*.egg-info/

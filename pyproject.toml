@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "plex-music-hygiene"
+version = "0.1.0"
+description = "Portable toolkit for Plex music metadata and artist artwork cleanup"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "mutagen>=1.47.0"
+]
+
+[project.optional-dependencies]
+images = ["Pillow>=10.0.0"]
+
+[project.scripts]
+plexh = "plex_music_hygiene.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
